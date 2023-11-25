@@ -15,15 +15,21 @@ for entry in backend_trace:
     print(f'pc : {hex(entry["pc"])}')
     for address in entry['symbolicAddresses']:
 
-        def is_close(area) -> bool:
-            return area['address'] <= address <= area['address'] + MAX_DISTANCE
-
         def distance(area) -> int:
             return address - area['address']
 
+        def absolute_distance(area) -> int:
+            return abs(distance(area))
+
+        def is_close(area) -> bool:
+            return 0 >= distance(area) >= -MAX_DISTANCE \
+                if area['name'] == 'stack' \
+                else 0 <= distance(area) <= MAX_DISTANCE
+
+
         close_areas = list(filter(is_close, symqemu_addresses))
         if close_areas:
-            closest_area = min(close_areas, key=distance)
+            closest_area = min(close_areas, key=absolute_distance)
             address_to_print = f'{closest_area["name"]}+{hex(distance(closest_area))}'
         else:
             address_to_print = hex(address)
